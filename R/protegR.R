@@ -1,5 +1,5 @@
 print("protegR_ui")
-protegR_ui <- function(config_global, idioma = TRUE){
+protegR_ui <- function(config_global, idioma = TRUE) {
 
   add_cookie_handlers(
     dashboardPage(
@@ -8,27 +8,27 @@ protegR_ui <- function(config_global, idioma = TRUE){
       dashboardHeader(title = config_global$header_title),
       dashboardSidebar(uiOutput("dynamic_sidebar")),
       dashboardBody(
-        useShinyjs(),  # ← ici, au début du body
-        # Dropdown conditionnel mais toujours visible si idioma = TRUE
-        if (idioma) {                                                          # à modifier pour idioma
-          div(
-            style = "
+                    useShinyjs(),  # ← ici, au début du body
+                    # Dropdown conditionnel mais toujours visible si idioma = TRUE
+                    if (idioma) {                                                          # à modifier pour idioma
+                      div(
+                        style = "
               position: absolute;
               top: 10px;
               right: 150px;
               width: 120px;
               z-index: 5000;
             ",
-            selectInput("select_idioma", NULL,
-                        choices = c("français" = "fr",
-                                    "english" = "en",
-                                    "español" = "es"),
-                        width = "120px")
-          )
-        },
-        tags$head(
-          # Cache les 3 lignes par défaut
-          tags$style(HTML("
+                        selectInput("select_idioma", NULL,
+                                    choices = c("français" = "fr",
+                                                "english" = "en",
+                                                "español" = "es"),
+                                    width = "120px")
+                      )
+                    },
+                    tags$head(
+                      # Cache les 3 lignes par défaut
+                      tags$style(HTML("
         .main-header .sidebar-toggle:before {
           content: none !important;
         }
@@ -42,8 +42,8 @@ protegR_ui <- function(config_global, idioma = TRUE){
           transform: rotate(270deg);
         }
       ")),
-          # Ajoute une flèche gauche/droite selon l'état du sidebar
-          tags$script(HTML("
+                      # Ajoute une flèche gauche/droite selon l'état du sidebar
+                      tags$script(HTML("
         $(document).on('shiny:connected', function() {
           function updateIcon() {
             if ($('body').hasClass('sidebar-collapse')) {
@@ -60,8 +60,8 @@ protegR_ui <- function(config_global, idioma = TRUE){
           updateIcon();
         });
       "))
-        ),
-        uiOutput("dynamic_body"))
+                    ),
+                    uiOutput("dynamic_body"))
     )
   )
 }
@@ -72,7 +72,6 @@ protegR_server <- function(input, output, session) {
   ns <- session$ns
 
   # * ------ AWS connect + load config --------------------------------------
-  #   AWS_connection() # si problème de connexion, ajouter config_s3_access dans les variables et connecter ici
 
 
   # APP CONTROL  -------------------------------------------------------
@@ -86,7 +85,6 @@ protegR_server <- function(input, output, session) {
 
   session$userData$user_info <- list(
     valid_user = reactiveVal(NULL),
-    #    valid_user = NULL,
     token_value = NULL,
     user_auth = reactiveVal(NULL),  # uniquement cette partie est réactive
     user_role = reactiveVal(NULL)
@@ -98,9 +96,9 @@ protegR_server <- function(input, output, session) {
   just_logged_out <- reactiveVal(FALSE) # pour éviter de lire les cookies au logout, juste avant qu'ils soient effacés
 
   # Fonction pour ne pas à devoir modifier ce fichier (load tous les modules utilisés par l'app)
-  protegR_load_modules_servers(sessions,input,session)
+  protegR_load_modules_servers(sessions, input, session)
 
-  observeEvent(input$select_idioma,{
+  observeEvent(input$select_idioma, {
     session$userData$idioma(input$select_idioma)
   })
 
@@ -116,9 +114,6 @@ protegR_server <- function(input, output, session) {
 
   # * ------ Lancer le fetch automatiquement au démarrage ------------------
 
-  #  ec2_folder <- config_global$EC2_folder
-  #  dns <- config_global$dns
-  # ajoute les infos clients dans le input$client_ip_data
   observe({
     # On attend que clientData soit disponible
     req(session$clientData$url_hostname)
@@ -130,12 +125,10 @@ protegR_server <- function(input, output, session) {
 
     just_logged_out(FALSE)
 
-    users_info <- s3readRDS(object = str_c(config_s3_location$s3_main_folder,
-                                           "/config_files/users_auth.rds"),
-                            bucket = config_s3_location$s3_bucket)
+    users_info <- s3readRDS_HL(object = "config_files/users_auth.rds")
 
 
-    valid_user_df <- users_info %>% #filter(username == "dev")
+    valid_user_df <- users_info %>%
       filter(username == input$username)
 
     # Vérifie que l'utilisateur existe
@@ -175,14 +168,11 @@ protegR_server <- function(input, output, session) {
     )
 
 
-    cookie_validator_delete(input$username,session)
+    cookie_validator_delete(input$username, session)
     perform_login(valid_user,
                   token_value,
                   input,
                   session)
-
-    #    session$userData$user_info$user_auth(input$username)
-
   })
 
   observe({
@@ -200,17 +190,10 @@ protegR_server <- function(input, output, session) {
     cat("user_auth mis à jour car cookie présent\n")
   })
 
-  #    observeEvent(session$userData$user_info$valid_user(), {
-  #      print("user_auth() modifié par valid_user")
-  #      session$userData$user_info$user_auth(input$username)
-  #    })
-
   observeEvent(input$logout, {
     just_logged_out(TRUE)
 
-    #    session$user <- NULL
-    #    rm(list = session$token, envir = sessions)
-    perform_logout(session = session )
+    perform_logout(session = session)
   })
 
   # DYNAMIC DASHBOAD ----------------------------------------------
@@ -266,16 +249,17 @@ protegR_server <- function(input, output, session) {
   });
 "))
       )
-    } else {  tagList(
-      tags$head(
-        # Icône par défaut (flèche vers la gauche)
-        tags$style(HTML("
+    } else {
+      tagList(
+        tags$head(
+          # Icône par défaut (flèche vers la gauche)
+          tags$style(HTML("
         .main-header .sidebar-toggle:before {
           content: none; /* Ne rien afficher par défaut */
         }
       ")),
-        # Script pour changer l’icône selon l’état de la sidebar
-        tags$script(HTML("
+          # Script pour changer l’icône selon l’état de la sidebar
+          tags$script(HTML("
         $(document).on('shiny:connected', function() {
           function updateIcon() {
             if ($('body').hasClass('sidebar-collapse')) {
@@ -316,13 +300,7 @@ protegR_server <- function(input, output, session) {
   # * ------ for cookie in config menu/ cookie refresh ----------------------
 
   # throttler les inputs pour réduire la fréquence de déclenchement
-  throttled_inputs <- reactive({
-    #    cat("🔁 observeEvent(throttled_inputs()) déclenché\n")
-    #    print(Sys.time())
-
-    reactiveValuesToList(input)}) %>% throttle(240000)   # 4 min
-  #  throttled_inputs <- throttle(reactiveValuesToList(input), 300000)  # 5 min
-  #  cookie_actvity_timestamp(just_logged_out, throttled_inputs(), session)
+  throttled_inputs <- reactive(reactiveValuesToList(input)) %>% throttle(240000)   # 4 min
 
   observeEvent(throttled_inputs(), {
     req(session$userData$user_info$user_auth())
@@ -330,25 +308,20 @@ protegR_server <- function(input, output, session) {
 
     now <- Sys.time()
     token_value <- session$userData$user_info$token_value
-    file_path <- str_c(session$userData$config_s3_location$s3_main_folder, "/session/", token_value, ".rds")
+    file_path <- paste0("session/", token_value, ".rds")
 
-    if (!object_exists(object = file_path,
-                       bucket = session$userData$config_s3_location$s3_bucket) |
-        s3readRDS(object = file_path,
-                  bucket = session$userData$config_s3_location$s3_bucket) %>%
-        pull(expiration) < now){
+    if (!s3exist_HL(object = file_path) |
+          s3readRDS_HL(object = file_path) %>%
+            pull(expiration) < now) {
       print("from cookie_activity_timestamp: cookie validator n'existe pas ou est expiré")
       just_logged_out(TRUE)
       session$userData$user_info$user_auth(NULL)
-      #          perform_logout(session)
+
     } else {
       print("from cookie_activity_timestamp: *** il y a un cookie validator ***")
     }
 
-    #    if (as.numeric(difftime(now, session$userData$timestamp_cookie(), units = "secs")) > session$userData$config_global$cookie_update_time) {
-
-    cookie_set_user(input,session)
-    #    session$userData$timestamp_activity(now) #for info only, use in config menu/dev
+    cookie_set_user(input, session)
     session$userData$timestamp_cookie_reset(now) #for info only, use in config menu/dev
     #    }
   })
@@ -360,23 +333,15 @@ protegR_server <- function(input, output, session) {
     invalidateLater(45000)
 
     print("for Quick check for inactivity (cookie)")
-    if(is.null(get_cookie(config_global$cookie_name))){
+    if (is.null(get_cookie(config_global$cookie_name))) {
       just_logged_out(TRUE)
       perform_logout(session = session)
       print("déconnexion si pas de cookie")
     } else {
-      cat("cookie value: ",get_cookie(config_global$cookie_name),"\n")
+      cat("cookie value: ", get_cookie(config_global$cookie_name), "\n")
     }
   })
 
-  #  observeEvent(throttled_inputs(),{
-  #    req(session$userData$user_info$user_auth())
-  #    cat("Inputs visibles par throttled_inputs:\n")
-  #    print(names(reactiveValuesToList(input)))
-  #    session$userData$timestamp_cookie_reset(Sys.time())
-  #  })
-
-  #  cookie_actvity_timestamp(just_logged_out, input, session)
   # * ------ login automatique si cookie -------------------------------------------------------------
 
   observe({
@@ -384,12 +349,10 @@ protegR_server <- function(input, output, session) {
 
 
     if (!just_logged_out() && is.null(session$userData$user_info$user_auth())) {   # << empêche de relire cookies si déconnecté volontairement
-      S3_save_cookie_valid <-  cookie_auto_login(input = input,session = session)
+      S3_save_cookie_valid <-  cookie_auto_login(input = input, session = session)
 
       if (!is.null(S3_save_cookie_valid)) {
-        valid_user_df <- s3readRDS(object = str_c(session$userData$config_s3_location$s3_main_folder,
-                                                  "/config_files/users_auth.rds"),
-                                   bucket = session$userData$config_s3_location$s3_bucket) %>%
+        valid_user_df <- s3readRDS_HL(object = "config_files/users_auth.rds") %>%
           filter(username == S3_save_cookie_valid[[1, "username"]])
 
         valid_user <- valid_user_df %>%
@@ -407,10 +370,6 @@ protegR_server <- function(input, output, session) {
           input = input,
           session = session
         )
-
-        #        session$userData$user_info$user_auth(valid_user$username)
-        #        cat("##### fin du block d'auto-connect avec cookie -> user_auth():", session$userData$user_info$user_auth(), "#########","\n")
-
       }
     }
   })
@@ -420,6 +379,4 @@ protegR_server <- function(input, output, session) {
       rm(list = session$token, envir = sessions)
     }
   })
-
 }
-

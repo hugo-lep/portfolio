@@ -8,6 +8,7 @@ library(protegR)
 library(tidyr)
 library(purrr)
 library(aws.s3)
+library(s3db)
 library(readr)
 library(dplyr)
 library(shinyWidgets)
@@ -27,9 +28,6 @@ sessions <- new.env(parent = emptyenv())
 config_s3_location <- read_rds("inst/app/data/config_s3_location.rds")
 config_s3_access <- read_rds("inst/app/data/config_s3_access.rds")
 
-AWS_connection()
-config_global <- s3readRDS(object = str_c(config_s3_location$s3_main_folder,"/config_files/config_global.rds"),
-                           bucket = config_s3_location$s3_bucket)
+s3_connection_HL()
 
-
-
+config_global <- s3readRDS_HL(object = "config_files/config_global.rds")
