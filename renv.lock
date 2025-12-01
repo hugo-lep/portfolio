@@ -2090,7 +2090,7 @@
       "RemoteUsername": "hugo-lep",
       "RemoteRepo": "protegR",
       "RemoteRef": "dev",
-      "RemoteSha": "c287d8f45083630824bcd5175417dfc66994231e"
+      "RemoteSha": "1cb2a5a935d539fb71fee0c58e2302888ebbf65a"
     },
     "purrr": {
       "Package": "purrr",
@@ -2384,6 +2384,12 @@
       ],
       "URL": "https://github.com/hugo-lep/s3db",
       "BugReports": "https://github.com/hugo-lep/s3db/issues",
+      "Suggests": [
+        "mockery",
+        "testthat",
+        "withr"
+      ],
+      "Config/testthat/edition": "3",
       "Author": "Jane Doe [aut, cre]",
       "Maintainer": "Jane Doe <jane@example.com>",
       "RemoteType": "github",
@@ -2391,7 +2397,7 @@
       "RemoteUsername": "hugo-lep",
       "RemoteRepo": "s3db",
       "RemoteRef": "master",
-      "RemoteSha": "04161c20e770971d9553fcf307ce16b78dc2be4b"
+      "RemoteSha": "13af899b3050e65d602eab236e6f03110eff65a2"
     },
     "sass": {
       "Package": "sass",
